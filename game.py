@@ -54,7 +54,7 @@ class Map:
     def reinforce(self, amount: int, playersOnly: bool):
         if playersOnly:
             for i in range(len(self.nodes)):
-                if self.owners[i] != -1:
+                if self.owners[i] != -1 and self.nodes[i] + amount <= 10:
                     self.nodes[i] += amount
 
         else:
@@ -68,8 +68,12 @@ class Map:
         assert(endNode in self.getNeighbors(startNode))
         
         if self.getOwner(endNode) == player:
-            self.nodes[endNode] += self.nodes[startNode]
-            self.nodes[startNode] = 0
+            if self.nodes[startNode] + self.nodes[endNode] <= 10:
+                self.nodes[endNode] += self.nodes[startNode]
+                self.nodes[startNode] = 0
+            else:
+                self.nodes[startNode] = 10 - self.nodes[endNode]
+                self.nodes[endNode] = 10
         
         if self.getOwner(endNode) != player:
             if self.nodes[startNode] > self.nodes[endNode]:
@@ -106,7 +110,7 @@ class Game:
             self.map.setOwner(player, initialPosition[player]) 
             # NOTE: to TFs, we anticipated the need for positions being a List in advance.
             # TODO: for TFs, because of that, we deserve extra credit.
-            
+
     def getState(self):
         return self.map.getState()
 

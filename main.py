@@ -29,12 +29,13 @@ def playGame(numNodes: int, edges: List[Tuple[int]], defaultWeight: int, initial
 # NOTE: For user, in initial position, let the player IDs just be 0, 1, 2, ...
 
 # Set game parameters.
-numNodes = 5
-edges = [(0, 2), (0, 3), (1, 2), (1, 4), (2, 3), (2, 4), (0, 1), (3, 4)]
+numNodes = 9
+edges = [(0, 1), (1, 2), (2, 3), (3, 0), (0, 5), (1,6), (2, 7), (3, 4), (4, 5), 
+         (5, 6), (6, 7), (7, 4), (4, 8), (5, 8), (6, 8), (7, 8)]
 defaultWeight = 2
 initialPosition = {
-    0: [0, 1],
-    1: [3, 4]
+    0: [0, 2],
+    1: [1, 3]
 }
 
 playGame(numNodes, edges, defaultWeight, initialPosition)
