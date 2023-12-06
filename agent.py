@@ -12,10 +12,11 @@ class Agent:
         self.nActions = 2 * len(self.games[0].map.edges) + 1 # Each edge (i, j) has 2 actions: i -> j and j -> i. also, the pass action.
         self.pi = pi # NOTE: Initialize random policy in the training script
 
-        # each state will be labelled with a unique list of tuples where each tuple is (node, owner, troops)
         self.states = {}
+        self.initialize_states()
 
     def initialize_states(self):
+        # each state will be labelled with a unique list of tuples where each tuple is (node, owner, troops)
         node_ids = range(len(self.nodes))
         owners = range(self.nPlayers + 1)  # Including a 'no owner' state
         troops = range(TROOPLIMIT + 1)
@@ -35,3 +36,4 @@ class Agent:
         # Naive approach: For each state, look at which states it transitioned to, then update the probabilities
 
 # TODO: Find a way to index the states and actions
+# TODO: Implement foggy and non-foggy
