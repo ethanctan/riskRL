@@ -20,6 +20,9 @@ class Agent:
         self.states = self.initialize_states()
         self.P = self.initialize_P()
 
+        # Initialize log for self actions
+        self.actions = [[]]
+
     def initialize_P(self): #P gives transition probabilities from state to state given action
         # each state is a tuple of tuples where each tuple is (node, owner, troops)
         # each action is a tuple (start_node, end_node)
@@ -58,7 +61,7 @@ class Agent:
 
     def initialize_new_game(self, game_state: dict):
         self.game_counter += 1
-        self.game_states.append([game_state])
+        self.game_states.append([game_state]) #initialize new game state log
         self.nodes = game_state["nodes"]
         self.nPlayers = len(game_state["owners"])
         self.nStates = ((TROOPLIMIT + 1) * (self.nPlayers + 1)) ** len(self.nodes)
@@ -67,19 +70,26 @@ class Agent:
         self.states = {}
         self.initialize_states()
 
+        self.actions.append([]) #initialize new actions log
+
     def update_current_game_state(self, game_state: dict):
         self.game_states[self.game_counter].append(game_state)
 
     def make_move(self):
         current_game_state = self.game_states[self.game_counter][-1]
         action = self.pi[current_game_state]
+        self.actions[self.game_counter].append(action)
         return action
 
     def approximate_P(self):
+        for game_state in self.game_states[self.game_counter]:
+
         
 
         pass
-        # Naive approach: For each state, look at which states it transitioned to, then update the probabilities
+        # Naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
+
+
 
 # TODO: Implement foggy and non-foggy
 
