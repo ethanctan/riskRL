@@ -1,5 +1,5 @@
 from game import Game
-from itertools import product
+from itertools import product, izip
 import random
 
 TROOPLIMIT = 10
@@ -81,12 +81,19 @@ class Agent:
         self.actions[self.game_counter].append(action)
         return action
 
-    def approximate_P(self):
-        for game_state in self.game_states[self.game_counter]:
+    def approximate_P(self, P: list):
+        for game_state, action, next_game_state in izip(self.game_states[self.game_counter], self.actions[self.game_counter], self.game_states[self.game_counter][1:]):
+            self.P[game_state][action][next_game_state] += 1            
 
+        # normalize P 
+        for state in self.states:
+            for action in range(self.nActions):
+                total = sum(self.P[state][action].values())
+                if total != 0:
+                    for next_state in self.states:
+                        self.P[state][action][next_state] /= total
         
-
-        pass
+        return P
         # Naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
 
 
