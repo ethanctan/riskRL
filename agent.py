@@ -1,5 +1,6 @@
 from game import Game
 from itertools import product, combinations
+import numpy as np
 import random
 
 TROOP_LIMIT = 10
@@ -167,13 +168,60 @@ class Agent:
         return P
         # Naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
 
-
 # TODO: Implement foggy and non-foggy
 
+class PolicyEvaluation:
+    def __init__(self, agent: Agent):
+        self.agent = agent
 
-'''
-Our agent needs to play multiple games.
-During each game, the agent follows the same policy. 
-At the end of each game, the agent updates its estimates of the transition probabilities.
-Using this, we perform one step of policy iteration then repeat the process.
-'''
+    # This code is adapted from problem set 1 (although altered for our constraints).
+    def computeQfromV(self, V):
+        Q = np.zeros((len(self.agent.states), len(self.agent.actions)))
+        for i, (key, value) in enumerate(self.agent.states.items()):
+            for j in range(len(self.agent.actions)):
+                a = self.agent.actions[j]
+                E = self.agent.R[key][a] + np.sum(self.agent.P[key][a][:] * V)
+                Q[i, j] = E
+        
+        return Q 
+
+
+    def extractMaxPiFromV(self, V):
+        Q = self.computeQfromV(V)
+        return np.argmax(Q, axis = 1)
+
+    def approxPolicyEvaluation(self, pi: dict, tolerance= 0.01):
+        epsilon = np.inf
+        V = np.zeroes(len(self.agent.states))
+        i = 0
+
+        while epsilon > tolerance:
+            nextV = V.copy()
+            for s in self.agent.states:
+                Rpis = self.agent.R[s][pi[s]]
+                Ppis = self.agent.P[s][pi[s]][:]
+
+                nextV[s] = Rpis + np.sum(Ppis * V)
+
+            i = i + 1
+            V = nextV
+        return V, i, epsilon
+    
+    def PolicyIterationStep(self, pi):
+        return self.extractMaxPiFromV(self.approxPolicyEvaluation(pi)[0])
+    
+    def PolicyIteration(self, initial_pi):
+        pi = initial_pi.copy()
+        i = 0
+
+        while True:
+            nextPI = self.PolicyIterationStep(pi)
+            i = i + 1
+
+            if np.array_equal(pi, nextPI):
+                break
+            pi = nextPI.copy()
+
+        V = self.ApproxPolicyEvaluation(pi)[0]
+
+        return pi, V, i
