@@ -219,7 +219,7 @@ class DynamicProgramming:
             pi[state] = max(Q[state], key=Q[state].get)
         return pi
 
-    def approxPolicyEvaluation(self, pi, tolerance=0.01):
+    def approxPolicyEvaluation(self, pi, tolerance=1):
         print("Approximating policy evaluation")
         epsilon = float('inf')
         V = defaultdict(float)
@@ -233,7 +233,7 @@ class DynamicProgramming:
                 Ppis = self.agent.P[s][pi[s]]  # defaultdict
                 expected_value = 0
                 for next_state, probability in Ppis.items():
-                    expected_value = (probability * V[next_state])
+                    expected_value += (probability * V[next_state])
                     
                 nextV[s] = Rpis + expected_value
 

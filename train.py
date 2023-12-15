@@ -71,5 +71,27 @@ for game_number in range(ITERS):
     agent1.initialize_new_game(game.getState())
     agent2.initialize_new_game(game.getState())
 
+# One final game between agents
+for turn_number in range(10):
+    print(f"Game {game_number}, turn {turn_number}")
+    # pass game state to agents
+    agent1.update_current_game_state(game.getState())
+    agent2.update_current_game_state(game.getState())
+
+    # Get moves
+    move1 = agent1.make_move()
+    move2 = agent2.make_move()
+    moves = [(1, move1[0], move1[1]), (2, move2[0], move2[1])]
+    
+    # Update game
+    if game.turn(moves):
+        break
+
+    # Update agents
+    agent1.update_current_game_state(game.getState())
+    agent2.update_current_game_state(game.getState())
+    
+    print(game.getState())
+
 
 
