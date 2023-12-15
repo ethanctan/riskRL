@@ -90,8 +90,7 @@ class Agent:
         # each state is a frozenset of tuples where each tuple is (node, owner, troops)
         # each action is a tuple (start_node, end_node)
         print(f"agent {self.agent_id} initializing P")
-        # default_prob = 1 / len(self.states)
-        default_prob = 1
+        default_prob = 1 / len(self.states)
         P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
 
         return P
@@ -190,13 +189,13 @@ class Agent:
             next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
             self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
 
-        # # normalize P 
-        # for state in self.states:
-        #     for action in self.actions:
-        #         total = sum(self.P[state][action].values())
-        #         if total:
-        #             for next_state in self.states:
-        #                 self.P[state][action][next_state] /= total
+        # normalize P 
+        for state in self.states:
+            for action in self.actions:
+                total = sum(self.P[state][action].values())
+                if total:
+                    for next_state in self.states:
+                        self.P[state][action][next_state] /= total
 
         print("P approximated")
         
