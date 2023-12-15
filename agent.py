@@ -160,9 +160,10 @@ class Agent:
                 if node[1] == self.agent_id:
                     nodes_owned_by_agent.append(node[0])
 
-            for action in self.actions:
-                if action[0] in nodes_owned_by_agent:
-                    valid_actions.append(action)
+            for start_node in nodes_owned_by_agent:
+                for end_node in range(len(self.nodes)):
+                    if start_node != end_node:
+                        valid_actions.append((start_node, end_node))
 
             if len(valid_actions) == 0:
                 pi[state_index] = random.randint(0, len(self.actions) - 1)
