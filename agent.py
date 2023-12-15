@@ -3,7 +3,7 @@ from itertools import product, permutations
 import numpy as np
 import random
 from consts import TROOP_LIMIT
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 class Agent:
     def __init__(self, game_state: dict, agent_id: int): 
@@ -17,8 +17,8 @@ class Agent:
         self.edges = game_state["edges"]
         # self.nStates = ((TROOP_LIMIT + 1) * (self.nPlayers + 1)) ** len(self.nodes)
         # self.nActions = 2 * len(game_state["edges"]) + 1 # Each edge (i, j) has 2 actions: i -> j and j -> i. also, the pass action.
-        self.states = self.initialize_states()
-        self.actions = self.initialize_actions()
+        self.states = self.initialize_states_dict() # list
+        self.actions = self.initialize_actions() # list
 
         # Initialize policy and transition probabilities, and state space
         self.pi = self.initialize_random_pi()
@@ -62,48 +62,99 @@ class Agent:
         # the reward matrix assigns rewards to each state-action pair
         # if an action reinforces a node adjacent to an enemy, then the reward is the number of troops added
         # if an action would reduce the number of troops in a territory adjacent to an enemy, then the penalty is the number of troops reduced by
-        R = defaultdict(dict)
+        R = np.zeros((len(self.states), len(self.actions)))
 
         for state in self.states:
             for node1, node2 in permutations(state, 2):
                 (start_node, start_node_owner, start_node_troops) = node1
                 (end_node, end_node_owner, end_node_troops) = node2
                 action = (start_node, end_node)
+                state_index = self.states.index(state)
+                action_index = self.actions.index(action)
 
                 # Check conditions only if start_node_owner is the agent
                 if start_node_owner == self.agent_id and end_node_owner != self.agent_id:
                     if start_node_troops >= end_node_troops:
                         # Action would kill an enemy territory if successful
-                        R[state][action] = TERRITORY_GAIN_REWARD
+                        R[state_index][action_index] = TERRITORY_GAIN_REWARD
                     else:
                         # Action reduces the number of troops in an enemy territory
-                        R[state][action] = (end_node_troops - start_node_troops) * TROOP_KILL_REWARD_MULTIPLIER
+                        R[state_index][action_index] = (end_node_troops - start_node_troops) * TROOP_KILL_REWARD_MULTIPLIER
                 else: # set reward to 0 for invalid actions
-                    R[state][action] = 0
+                    R[state_index][action_index] = 0
 
         return R
 
-                # TODO: Implement rewards that depend on adjacency and how many nodes the enemy owns
+        # TODO: Implement rewards that depend on adjacency and how many nodes the enemy owns
 
+    # def initialize_R(self):
+    #     print(f"agent {self.agent_id} initializing R")
+
+
+    #     TROOP_LOSS_PENALTY_MULTIPLIER = 1
+    #     TERRITORY_LOSS_PENALTY = 10
+    #     TROOP_KILL_REWARD_MULTIPLIER = 1
+    #     TERRITORY_GAIN_REWARD = 10
+    #     ENEMY_KILL_REWARD = 100
+    #     DEATH_PENALTY = 1000
+
+    #     # the reward matrix assigns rewards to each state-action pair
+    #     # if an action reinforces a node adjacent to an enemy, then the reward is the number of troops added
+    #     # if an action would reduce the number of troops in a territory adjacent to an enemy, then the penalty is the number of troops reduced by
+    #     R = defaultdict(dict)
+
+    #     for state in self.states:
+    #         for node1, node2 in permutations(state, 2):
+    #             (start_node, start_node_owner, start_node_troops) = node1
+    #             (end_node, end_node_owner, end_node_troops) = node2
+    #             action = (start_node, end_node)
+
+    #             # Check conditions only if start_node_owner is the agent
+    #             if start_node_owner == self.agent_id and end_node_owner != self.agent_id:
+    #                 if start_node_troops >= end_node_troops:
+    #                     # Action would kill an enemy territory if successful
+    #                     R[state][action] = TERRITORY_GAIN_REWARD
+    #                 else:
+    #                     # Action reduces the number of troops in an enemy territory
+    #                     R[state][action] = (end_node_troops - start_node_troops) * TROOP_KILL_REWARD_MULTIPLIER
+    #             else: # set reward to 0 for invalid actions
+    #                 R[state][action] = 0
+
+    #     return R
+
+    #     # TODO: Implement rewards that depend on adjacency and how many nodes the enemy owns
 
     def initialize_P(self): #P gives transition probabilities from state to state given action
         # each state is a frozenset of tuples where each tuple is (node, owner, troops)
         # each action is a tuple (start_node, end_node)
         print(f"agent {self.agent_id} initializing P")
-        default_prob = 1 / len(self.states)
-        P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
+        # initialize p as np matrix of size (nStates, nActions, nStates) with default probability
+        P = np.full((len(self.states), len(self.actions), len(self.states)), 1)
 
         return P
+
+    # def initialize_P(self): #P gives transition probabilities from state to state given action
+    #     # each state is a frozenset of tuples where each tuple is (node, owner, troops)
+    #     # each action is a tuple (start_node, end_node)
+    #     print(f"agent {self.agent_id} initializing P")
+    #     default_prob = 1 / len(self.states)
+    #     P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
+    #     print(P["test"]["test2"].values())
+
+    #     return P
+    
 
     def initialize_random_pi(self):
         # each action is a tuple (start_node, end_node)
         # given each state, select a random start node and a random end node
         print(f"agent {self.agent_id} initializing pi")
-        pi = {}
+        pi = np.zeros(len(self.states))
+        i = 0
         for state in self.states:
             # pick a random valid action
             valid_actions = []
             nodes_owned_by_agent = []
+            state_index = self.states.index(state)
 
             for node in state:
                 if node[1] == self.agent_id:
@@ -114,14 +165,44 @@ class Agent:
                     valid_actions.append(action)
 
             if len(valid_actions) == 0:
-                pi[state] = random.choice(self.actions)
+                pi[state_index] = random.randint(0, len(self.actions) - 1)
                 continue
                     
-            pi[state] = random.choice(valid_actions)
+            pi[state_index] = self.actions.index(random.choice(valid_actions))
+            
+            if i % 1000 == 0:
+                print(f"agent {self.agent_id} initializing pi for state {i}")
+            i += 1
 
         return pi
 
-    def initialize_states(self):
+    # def initialize_random_pi(self):
+    #     # each action is a tuple (start_node, end_node)
+    #     # given each state, select a random start node and a random end node
+    #     print(f"agent {self.agent_id} initializing pi")
+    #     pi = {}
+    #     for state in self.states:
+    #         # pick a random valid action
+    #         valid_actions = []
+    #         nodes_owned_by_agent = []
+
+    #         for node in state:
+    #             if node[1] == self.agent_id:
+    #                 nodes_owned_by_agent.append(node[0])
+
+    #         for action in self.actions:
+    #             if action[0] in nodes_owned_by_agent:
+    #                 valid_actions.append(action)
+
+    #         if len(valid_actions) == 0:
+    #             pi[state] = random.choice(self.actions)
+    #             continue
+                    
+    #         pi[state] = random.choice(valid_actions)
+
+    #     return pi
+    
+    def initialize_states_dict(self):
         # each state will be labelled with a unique frozenset of tuples where each tuple is (node, owner, troops)
         print(f"agent {self.agent_id} initializing states")
         node_ids = range(len(self.nodes))
@@ -139,15 +220,15 @@ class Agent:
         # Generate all possible game states
         all_game_states = product(*[single_node_states for _ in node_ids])
 
-        # Create a dictionary with game states as frozensets
-        states = {}
+        # Create a list with game states as frozensets
+        states = []
         i = 0
         for state in all_game_states:
             if i % 100000 == 0:
                 print(f"agent {self.agent_id} handling game state {i}")
             i += 1
             game_state = frozenset((node_id,) + state[i] for i, node_id in enumerate(node_ids))
-            states[game_state] = None  # The value can be anything, e.g., game state score
+            states.append(game_state)
 
         return states
 
@@ -178,26 +259,51 @@ class Agent:
     def make_move(self):
         current_game_state = self.game_log[self.game_counter][-1]
         current_game_state_frozenset = self.turn_game_state_into_frozenset(current_game_state)
-        action = self.pi[current_game_state_frozenset]
+
+        # get index of action by passing index of state to pi
+        current_game_state_index = self.states.index(current_game_state_frozenset)
+        action = self.actions[self.pi[current_game_state_index]]
         self.actions_log[self.game_counter].append(action)
         return action
-            
+    
     def approximate_P(self):
         print(f"agent {self.agent_id} approximating P")
         for game_state, action, next_game_state in zip(self.game_log[self.game_counter], self.actions_log[self.game_counter], self.game_log[self.game_counter][1:]):
             game_state_frozenset = self.turn_game_state_into_frozenset(game_state)
             next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
-            self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
+            game_state_index = self.states.index(game_state_frozenset)
+            action_index = self.actions.index(action)
+            next_game_state_index = self.states.index(next_game_state_frozenset)
+            self.P[game_state_index][action_index][next_game_state_index] += 1
 
         # normalize P 
         for state in self.states:
             for action in self.actions:
-                total = sum(self.P[state][action].values())
+                total = np.sum(self.P[state][action])
                 if total:
                     for next_state in self.states:
                         self.P[state][action][next_state] /= total
+                print(f"total probability is {total} for state {state} and action {action}")
 
         print("P approximated")
+            
+    # def approximate_P(self):
+    #     print(f"agent {self.agent_id} approximating P")
+    #     for game_state, action, next_game_state in zip(self.game_log[self.game_counter], self.actions_log[self.game_counter], self.game_log[self.game_counter][1:]):
+    #         game_state_frozenset = self.turn_game_state_into_frozenset(game_state)
+    #         next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
+    #         self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
+
+    #     # normalize P 
+    #     for state in self.states:
+    #         for action in self.actions:
+    #             total = sum(self.P[state][action].values())
+    #             if total:
+    #                 for next_state in self.states:
+    #                     self.P[state][action][next_state] /= total
+    #             print(f"total probability is {total} for state {state} and action {action}")
+
+    #     print("P approximated")
         
         # The above is a naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
 
@@ -212,43 +318,78 @@ class DynamicProgramming:
 
     def computeQfromV(self, V):
         print("Computing Q from V")
-        Q = defaultdict(lambda: defaultdict(float))
+        # Q's dimensions are (state, action)
+        Q = np.zeros((len(self.agent.states), len(self.agent.actions)))
         for state in self.agent.states:
             for a in self.agent.actions:
-                expected_value = self.agent.R[state][a]
-                for next_state, probability in self.agent.P[state][a].items():
-                    expected_value += probability * V.get(next_state, 0)
-                Q[state][a] = expected_value
+                state_index = list(self.agent.states.keys()).index(state)
+                action_index = self.agent.actions.index(a)
+                expected_value = self.agent.R[state_index, action_index] + np.sum(self.agent.P[state_index, action_index, :] * V)
+                Q[state_index][action_index] = expected_value
         return Q
+
+    # def computeQfromV(self, V):
+    #     print("Computing Q from V")
+    #     # Q's dimensions are (state, action)
+    #     Q = defaultdict(lambda: defaultdict(float))
+    #     for state in self.agent.states:
+    #         for a in self.agent.actions:
+    #             expected_value = self.agent.R[state][a]
+    #             for next_state, probability in self.agent.P[state][a].items():
+    #                 expected_value += probability * V.get(next_state, 0)
+    #             Q[state][a] = expected_value
+    #     return Q
 
     def extractMaxPiFromV(self, V):
         print("Extracting max pi from V")
-        pi = defaultdict(lambda: None)
-        Q = self.computeQfromV(V)
-        for state in Q:
-            pi[state] = max(Q[state], key=Q[state].get)
-        return pi
+        return np.argmax(self.computeQfromV(V), axis=1)
+
+        # pi = np.zeros(len(self.agent.states))
+        # Q = self.computeQfromV(V)
+        # for state in Q:
+        #     pi[state] = max(Q[state], key=Q[state].get)
+        # return pi
 
     def approxPolicyEvaluation(self, pi, tolerance=0.01):
         print("Approximating policy evaluation")
-        epsilon = float('inf')
-        V = defaultdict(float)
-
+        epsilon = np.inf
+        V = np.zeros(len(self.agent.states))
         i = 0
         while epsilon > tolerance:
             print(f"Approximating policy evaluation iteration {i}")
             nextV = V.copy()
             for s in self.agent.states:
-                Rpis = self.agent.R[s][pi[s]]
-                Ppis = self.agent.P[s][pi[s]]  # defaultdict
-                expected_value = sum(probability * V[next_state] for next_state, probability in Ppis.items())
-                nextV[s] = Rpis + expected_value
+                state_index = list(self.agent.states.keys()).index(s)
+                Rpis = self.agent.R[state_index, pi[state_index]]
+                Ppis = self.agent.P[state_index, pi[state_index], :]  
+                nextV[state_index] = Rpis + np.sum(Ppis * V)
 
-            epsilon = max(abs(nextV[s] - V[s]) for s in self.agent.states)
+            epsilon = np.max(np.abs(nextV - V))
             print(f"epsilon: {epsilon}")
             V = nextV
             i += 1
         return V
+
+    # def approxPolicyEvaluation(self, pi, tolerance=0.01):
+    #     print("Approximating policy evaluation")
+    #     epsilon = float('inf')
+    #     V = defaultdict(float)
+
+    #     i = 0
+    #     while epsilon > tolerance:
+    #         print(f"Approximating policy evaluation iteration {i}")
+    #         nextV = V.copy()
+    #         for s in self.agent.states:
+    #             Rpis = self.agent.R[s][pi[s]]
+    #             Ppis = self.agent.P[s][pi[s]]  # defaultdict
+    #             expected_value = sum(probability * V[next_state] for next_state, probability in Ppis.items())
+    #             nextV[s] = Rpis + expected_value
+
+    #         epsilon = max(abs(nextV[s] - V[s]) for s in self.agent.states)
+    #         print(f"epsilon: {epsilon}")
+    #         V = nextV
+    #         i += 1
+    #     return V
 
     def policyIterationStep(self, pi):
         return self.extractMaxPiFromV(self.approxPolicyEvaluation(pi))
