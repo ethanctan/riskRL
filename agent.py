@@ -2,7 +2,7 @@ from game import Game
 from itertools import product, permutations
 import numpy as np
 import random
-from consts import TROOP_LIMIT
+from consts import TROOP_LIMIT, NUM_PLAYERS
 from collections import defaultdict, OrderedDict
 
 class Agent:
@@ -13,17 +13,10 @@ class Agent:
         self.game_counter = 0
         self.game_log = [[game_state]] #list of lists, each list of states corresponds to the state of one game
         self.nodes = game_state["nodes"]
-        self.nPlayers = len(game_state["owners"])
+        self.nPlayers = NUM_PLAYERS
         self.edges = game_state["edges"]
         # self.nStates = ((TROOP_LIMIT + 1) * (self.nPlayers + 1)) ** len(self.nodes)
         # self.nActions = 2 * len(game_state["edges"]) + 1 # Each edge (i, j) has 2 actions: i -> j and j -> i. also, the pass action.
-        self.states = self.initialize_states_dict() # list
-        self.actions = self.initialize_actions() # list
-
-        # Initialize policy and transition probabilities, and state space
-        self.pi = self.initialize_random_pi()
-        self.P = self.initialize_P()
-        self.R = self.initialize_R()
 
         # Initialize log for self actions
         self.actions_log = [[]]
@@ -152,24 +145,24 @@ class Agent:
         i = 0
         for state in self.states:
             # pick a random valid action
-            valid_actions = []
-            nodes_owned_by_agent = []
             state_index = self.states.index(state)
 
-            for node in state:
-                if node[1] == self.agent_id:
-                    nodes_owned_by_agent.append(node[0])
+            # valid_actions = []
+            # nodes_owned_by_agent = []
+            # for node in state:
+            #     if node[1] == self.agent_id:
+            #         nodes_owned_by_agent.append(node[0])
 
-            for start_node in nodes_owned_by_agent:
-                for end_node in range(len(self.nodes)):
-                    if start_node != end_node:
-                        valid_actions.append((start_node, end_node))
+            # for start_node in nodes_owned_by_agent:
+            #     for end_node in range(len(self.nodes)):
+            #         if start_node != end_node:
+            #             valid_actions.append((start_node, end_node))
 
-            if len(valid_actions) == 0:
-                pi[state_index] = random.randint(0, len(self.actions) - 1)
-                continue
+            # if len(valid_actions) == 0:
+            #     pi[state_index] = random.randint(0, len(self.actions) - 1)
+            #     continue
                     
-            pi[state_index] = self.actions.index(random.choice(valid_actions))
+            pi[state_index] = np.random.randint(0, len(self.actions) - 1)
             
             if i % 1000 == 0:
                 print(f"agent {self.agent_id} initializing pi for state {i}")
@@ -209,6 +202,7 @@ class Agent:
         node_ids = range(len(self.nodes))
         owners = range(self.nPlayers + 1)  # Including a 'no owner' state
         troops = range(TROOP_LIMIT + 1)
+        print(f"owners: {owners}, troops: {troops}")
 
         print(f"agent {self.agent_id} generating all possible node states")
 
@@ -230,6 +224,8 @@ class Agent:
             i += 1
             game_state = frozenset((node_id,) + state[i] for i, node_id in enumerate(node_ids))
             states.append(game_state)
+
+        print(len(states))
 
         return states
 

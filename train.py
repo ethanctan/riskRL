@@ -23,8 +23,19 @@ killTurn = 1000
 # Initialize agents
 map = Map(numNodes, edges, defaultWeight)
 game = Game(map, initialPosition, reinforceAmount, reinforcePlayersOnly)
+print(game.getState())
 agent1 = Agent(game.getState(), 1)
 agent2 = Agent(game.getState(), 2)
+agent1.states = agent1.initialize_states_dict()
+agent1.actions = agent1.initialize_actions()
+agent1.pi = agent1.initialize_random_pi()
+agent1.P = agent1.initialize_P()
+agent1.R = agent1.initialize_R()
+agent2.states = agent1.states.copy()
+agent2.actions = agent1.actions.copy()
+agent2.pi = agent1.pi.copy()
+agent2.P = agent1.P.copy()
+agent2.R = agent1.R.copy()
 
 print("All agents initialized. Starting training")
 
