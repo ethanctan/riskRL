@@ -66,6 +66,16 @@ for game_number in range(ITERS):
     agent2.update_pi(pi2)
     
     # initialize new game and pass to agents
+    numNodes = 4
+    edges = [(1, 2), (2, 4), (4, 3), (3, 1), (1, 4)]
+    defaultWeight = 2
+    initialPosition = {
+        1: [2],
+        2: [3]
+    }
+    reinforceAmount = 1
+    reinforcePlayersOnly = True
+    killTurn = 1000
     game = Game(numNodes, edges, defaultWeight, initialPosition)
     agent1.initialize_new_game(game.getState())
     agent2.initialize_new_game(game.getState())

@@ -95,7 +95,7 @@ class Map:
         assert(self.owners[startNode] == player)
     
 class Game:
-    def __init__(self, map: Map, initialPosition: Dict[int, List[int]], reinforceAmount: int, 
+    def __init__(self, map: Map, initialPosition, reinforceAmount: int, 
                  reinforcePlayersOnly: bool):
         # NOTE: The map should be set in advance of running the game.
         # TODO: Ensure agents are aware of where they are in the turn order (i.e. list index).

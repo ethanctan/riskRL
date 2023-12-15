@@ -2,7 +2,7 @@ from game import Game
 from itertools import product, permutations
 import numpy as np
 import random
-from consts import TROOP_LIMIT
+from consts import TROOP_LIMIT, NUM_PLAYERS
 from collections import defaultdict
 
 class Agent:
@@ -90,7 +90,8 @@ class Agent:
         # each state is a frozenset of tuples where each tuple is (node, owner, troops)
         # each action is a tuple (start_node, end_node)
         print(f"agent {self.agent_id} initializing P")
-        default_prob = 1 / len(self.states)
+        # default_prob = 1 / len(self.states)
+        default_prob = 1
         P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
 
         return P
@@ -125,7 +126,7 @@ class Agent:
         # each state will be labelled with a unique frozenset of tuples where each tuple is (node, owner, troops)
         print(f"agent {self.agent_id} initializing states")
         node_ids = range(len(self.nodes))
-        owners = range(self.nPlayers + 1)  # Including a 'no owner' state
+        owners = range(NUM_PLAYERS + 1)  # Including a 'no owner' state
         troops = range(TROOP_LIMIT + 1)
 
         print(f"agent {self.agent_id} generating all possible node states")
@@ -189,13 +190,13 @@ class Agent:
             next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
             self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
 
-        # normalize P 
-        for state in self.states:
-            for action in self.actions:
-                total = sum(self.P[state][action].values())
-                if total:
-                    for next_state in self.states:
-                        self.P[state][action][next_state] /= total
+        # # normalize P 
+        # for state in self.states:
+        #     for action in self.actions:
+        #         total = sum(self.P[state][action].values())
+        #         if total:
+        #             for next_state in self.states:
+        #                 self.P[state][action][next_state] /= total
 
         print("P approximated")
         
@@ -241,11 +242,17 @@ class DynamicProgramming:
             for s in self.agent.states:
                 Rpis = self.agent.R[s][pi[s]]
                 Ppis = self.agent.P[s][pi[s]]  # defaultdict
-                expected_value = sum(probability * V[next_state] for next_state, probability in Ppis.items())
+                expected_value = 0
+                for next_state, probability in Ppis.items():
+                    print(f"probability: {probability}")
+                    print(f"V[next_state]: {V[next_state]}")
+                    expected_value = (probability * V[next_state])
+                    
                 nextV[s] = Rpis + expected_value
 
             epsilon = max(abs(nextV[s] - V[s]) for s in self.agent.states)
             print(f"epsilon: {epsilon}")
+            # print(f"V: {V}")
             V = nextV
             i += 1
         return V
