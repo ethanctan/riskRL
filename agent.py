@@ -4,6 +4,7 @@ import numpy as np
 import random
 from consts import TROOP_LIMIT, NUM_PLAYERS
 from collections import defaultdict, OrderedDict
+from scipy import sparse
 
 class Agent:
     def __init__(self, game_state: dict, agent_id: int): 
@@ -62,8 +63,8 @@ class Agent:
                 (start_node, start_node_owner, start_node_troops) = node1
                 (end_node, end_node_owner, end_node_troops) = node2
                 action = (start_node, end_node)
-                state_index = self.states.index(state)
-                action_index = self.actions.index(action)
+                state_index = int(self.states.index(state))
+                action_index = int(self.actions.index(action))
 
                 # Check conditions only if start_node_owner is the agent
                 if start_node_owner == self.agent_id and end_node_owner != self.agent_id:
@@ -117,12 +118,21 @@ class Agent:
 
     #     # TODO: Implement rewards that depend on adjacency and how many nodes the enemy owns
 
-    def initialize_P(self): #P gives transition probabilities from state to state given action
-        # each state is a frozenset of tuples where each tuple is (node, owner, troops)
-        # each action is a tuple (start_node, end_node)
+    def initialize_P(self):
         print(f"agent {self.agent_id} initializing P")
-        # initialize p as np matrix of size (nStates, nActions, nStates) with default probability
-        P = np.full((len(self.states), len(self.actions), len(self.states)), 1)
+
+        # Flattening the 3D structure to a 2D structure
+        rows = len(self.states) * len(self.actions)
+        cols = len(self.states)
+
+        # Using a sparse matrix (like lil_matrix for efficient construction)
+        P = sparse.lil_matrix((rows, cols))
+
+        # Assuming some logic here to fill in the non-default values.
+        # Example:
+        # for state_index, action_index, next_state_index, probability in data:
+        #     row = state_index * len(self.actions) + action_index
+        #     P[row, next_state_index] = probability
 
         return P
 
@@ -130,9 +140,8 @@ class Agent:
     #     # each state is a frozenset of tuples where each tuple is (node, owner, troops)
     #     # each action is a tuple (start_node, end_node)
     #     print(f"agent {self.agent_id} initializing P")
-    #     default_prob = 1 / len(self.states)
-    #     P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
-    #     print(P["test"]["test2"].values())
+    #     # initialize p as np matrix of size (nStates, nActions, nStates) with default probability
+    #     P = np.full((len(self.states), len(self.actions), len(self.states)), 1)
 
     #     return P
     
@@ -145,7 +154,7 @@ class Agent:
         i = 0
         for state in self.states:
             # pick a random valid action
-            state_index = self.states.index(state)
+            state_index = int(self.states.index(state))
 
             # valid_actions = []
             # nodes_owned_by_agent = []
@@ -258,7 +267,7 @@ class Agent:
         current_game_state_frozenset = self.turn_game_state_into_frozenset(current_game_state)
 
         # get index of action by passing index of state to pi
-        current_game_state_index = self.states.index(current_game_state_frozenset)
+        current_game_state_index = int(self.states.index(current_game_state_frozenset))
         action = self.actions[self.pi[current_game_state_index]]
         self.actions_log[self.game_counter].append(action)
         return action
@@ -268,42 +277,44 @@ class Agent:
         for game_state, action, next_game_state in zip(self.game_log[self.game_counter], self.actions_log[self.game_counter], self.game_log[self.game_counter][1:]):
             game_state_frozenset = self.turn_game_state_into_frozenset(game_state)
             next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
-            game_state_index = self.states.index(game_state_frozenset)
-            action_index = self.actions.index(action)
-            next_game_state_index = self.states.index(next_game_state_frozenset)
-            self.P[game_state_index][action_index][next_game_state_index] += 1
+            game_state_index = int(self.states.index(game_state_frozenset))
+            action_index = int(self.actions.index(action))
+            next_game_state_index = int(self.states.index(next_game_state_frozenset))
+            row = game_state_index * len(self.actions) + action_index
+            self.P[row, next_game_state_index] += 1
 
-        # normalize P 
-        for state in self.states:
-            for action in self.actions:
-                total = np.sum(self.P[state][action])
+        # normalize P
+        for state_index in range(len(self.states)):
+            for action_index in range(len(self.actions)):
+                row = state_index * len(self.actions) + action_index
+                total = self.P[row, :].sum()
                 if total:
-                    for next_state in self.states:
-                        self.P[state][action][next_state] /= total
-                print(f"total probability is {total} for state {state} and action {action}")
+                    self.P[row, :] /= total
+                print(f"total probability is {total} for state {state_index} and action {action_index}")
 
         print("P approximated")
-            
+
     # def approximate_P(self):
     #     print(f"agent {self.agent_id} approximating P")
     #     for game_state, action, next_game_state in zip(self.game_log[self.game_counter], self.actions_log[self.game_counter], self.game_log[self.game_counter][1:]):
     #         game_state_frozenset = self.turn_game_state_into_frozenset(game_state)
     #         next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
-    #         self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
+    #         game_state_index = self.states.index(game_state_frozenset)
+    #         action_index = self.actions.index(action)
+    #         next_game_state_index = self.states.index(next_game_state_frozenset)
+    #         self.P[game_state_index][action_index][next_game_state_index] += 1
 
     #     # normalize P 
     #     for state in self.states:
     #         for action in self.actions:
-    #             total = sum(self.P[state][action].values())
+    #             total = np.sum(self.P[state][action])
     #             if total:
     #                 for next_state in self.states:
     #                     self.P[state][action][next_state] /= total
     #             print(f"total probability is {total} for state {state} and action {action}")
 
     #     print("P approximated")
-        
-        # The above is a naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
-
+            
     def update_pi(self, pi: dict):  
         self.pi = pi
 
@@ -319,8 +330,8 @@ class DynamicProgramming:
         Q = np.zeros((len(self.agent.states), len(self.agent.actions)))
         for state in self.agent.states:
             for a in self.agent.actions:
-                state_index = list(self.agent.states.keys()).index(state)
-                action_index = self.agent.actions.index(a)
+                state_index = int(self.agent.states.index(state))
+                action_index = int(self.agent.actions.index(a))
                 expected_value = self.agent.R[state_index, action_index] + np.sum(self.agent.P[state_index, action_index, :] * V)
                 Q[state_index][action_index] = expected_value
         return Q
@@ -356,9 +367,10 @@ class DynamicProgramming:
             print(f"Approximating policy evaluation iteration {i}")
             nextV = V.copy()
             for s in self.agent.states:
-                state_index = list(self.agent.states.keys()).index(s)
+                state_index = int(self.agent.states.index(s))
                 Rpis = self.agent.R[state_index, pi[state_index]]
-                Ppis = self.agent.P[state_index, pi[state_index], :]  
+                row = state_index * len(self.agent.actions) + pi[state_index]
+                Ppis = self.agent.P[row, :].toarray().flatten()  # Convert sparse row to dense
                 nextV[state_index] = Rpis + np.sum(Ppis * V)
 
             epsilon = np.max(np.abs(nextV - V))
@@ -369,24 +381,24 @@ class DynamicProgramming:
 
     # def approxPolicyEvaluation(self, pi, tolerance=0.01):
     #     print("Approximating policy evaluation")
-    #     epsilon = float('inf')
-    #     V = defaultdict(float)
-
+    #     epsilon = np.inf
+    #     V = np.zeros(len(self.agent.states))
     #     i = 0
     #     while epsilon > tolerance:
     #         print(f"Approximating policy evaluation iteration {i}")
     #         nextV = V.copy()
     #         for s in self.agent.states:
-    #             Rpis = self.agent.R[s][pi[s]]
-    #             Ppis = self.agent.P[s][pi[s]]  # defaultdict
-    #             expected_value = sum(probability * V[next_state] for next_state, probability in Ppis.items())
-    #             nextV[s] = Rpis + expected_value
+    #             state_index = list(self.agent.states.keys()).index(s)
+    #             Rpis = self.agent.R[state_index, pi[state_index]]
+    #             Ppis = self.agent.P[state_index, pi[state_index], :]  
+    #             nextV[state_index] = Rpis + np.sum(Ppis * V)
 
-    #         epsilon = max(abs(nextV[s] - V[s]) for s in self.agent.states)
+    #         epsilon = np.max(np.abs(nextV - V))
     #         print(f"epsilon: {epsilon}")
     #         V = nextV
     #         i += 1
     #     return V
+
 
     def policyIterationStep(self, pi):
         return self.extractMaxPiFromV(self.approxPolicyEvaluation(pi))
