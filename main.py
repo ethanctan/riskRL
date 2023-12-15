@@ -15,10 +15,10 @@ def playGame(numNodes: int, edges: List[Tuple[int]], defaultWeight: int, initial
 
         moves = []
         for playerIndex in range(numPlayers):
-            print(f"Currently talking to player {playerIndex}.")
+            print(f"Currently talking to player {playerIndex + 1}.")
             startNode = int(input("Enter your movement's starting node: "))
             endNode = int(input("Enter your movement's ending node: "))
-            moves.append((playerIndex, startNode, endNode))
+            moves.append((playerIndex + 1, startNode, endNode))
 
         if game.turn(moves):
             break
@@ -34,8 +34,8 @@ edges = [(0, 1), (1, 2), (2, 3), (3, 0), (0, 5), (1,6), (2, 7), (3, 4), (4, 5),
          (5, 6), (6, 7), (7, 4), (4, 8), (5, 8), (6, 8), (7, 8)]
 defaultWeight = 2
 initialPosition = {
-    0: [0, 2],
-    1: [1, 3]
+    1: [0, 2],
+    2: [1, 3]
 }
 
 playGame(numNodes, edges, defaultWeight, initialPosition)

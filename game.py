@@ -1,10 +1,11 @@
 from typing import List, Tuple, Dict
+from consts import TROOP_LIMIT
 
 class Map:
     def __init__(self, numNodes: int, edges: List[Tuple[int]], defaultWeight: int):
         # NOTE: indices of nodes are 0-indexed
         self.nodes = [defaultWeight] * numNodes
-        self.owners = [-1] * numNodes
+        self.owners = [0] * numNodes
         self.edges = edges
 
         # Ensure that edges have correct length.
@@ -45,7 +46,7 @@ class Map:
     
     # Function run to check if the game has ended.
     def getDone(self):
-        if len(set(self.owners)) == 1 and self.owners[0] != -1:
+        if len(set(self.owners)) == 1 and self.owners[0] != 0:
             return True
         
         return False
@@ -54,7 +55,7 @@ class Map:
     def reinforce(self, amount: int, playersOnly: bool):
         if playersOnly:
             for i in range(len(self.nodes)):
-                if self.owners[i] != -1 and self.nodes[i] + amount <= 10:
+                if self.owners[i] != 0 and self.nodes[i] + amount <= TROOP_LIMIT:
                     self.nodes[i] += amount
 
         else:
@@ -63,17 +64,21 @@ class Map:
 
     # Function run by game to communicate player actions to map.
     def update(self, player: int, startNode: int, endNode: int):
-        # Check update is valid.
-        assert(self.getOwner(startNode) == player)
-        assert(endNode in self.getNeighbors(startNode))
+
+        if self.getOwner(startNode) != player or endNode not in self.getNeighbors(startNode):
+            return
+
+        # Check update is valid. NOTE We don't do this because invalid moves are just taken as no moves.
+        # assert(self.getOwner(startNode) == player)
+        # assert(endNode in self.getNeighbors(startNode))
         
         if self.getOwner(endNode) == player:
-            if self.nodes[startNode] + self.nodes[endNode] <= 10:
+            if self.nodes[startNode] + self.nodes[endNode] <= TROOP_LIMIT:
                 self.nodes[endNode] += self.nodes[startNode]
                 self.nodes[startNode] = 0
             else:
-                self.nodes[startNode] = 10 - self.nodes[endNode]
-                self.nodes[endNode] = 10
+                self.nodes[startNode] = TROOP_LIMIT - self.nodes[endNode]
+                self.nodes[endNode] = TROOP_LIMIT
         
         if self.getOwner(endNode) != player:
             if self.nodes[startNode] > self.nodes[endNode]:
