@@ -37,7 +37,8 @@ class Agent:
                     actions.append((i, j))
         return actions
     
-    def getNeighbors(self, node: int):
+    # Not needed yet
+    def get_neighbors(self, node: int):
         neighbors = [node]
         for edge in self.edges:
             if edge[0] == node:
@@ -151,7 +152,7 @@ class Agent:
         self.actions_log[self.game_counter].append(action)
         return action
             
-    def approximate_P(self, P: list):
+    def approximate_P(self):
         for game_state, action, next_game_state in zip(self.game_log[self.game_counter], self.actions_log[self.game_counter], self.game_log[self.game_counter][1:]):
             game_state_set = self.turn_game_state_into_set(game_state)
             next_game_state_set = self.turn_game_state_into_set(next_game_state)
@@ -165,12 +166,14 @@ class Agent:
                     for next_state in self.states:
                         self.P[state][action][next_state] /= total
         
-        return P
-        # Naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
+        # The above is a naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
+
+    def update_pi(self, pi: dict):
+        self.pi = pi
 
 # TODO: Implement foggy and non-foggy
 
-class PolicyEvaluation:
+class DynamicProgramming:
     def __init__(self, agent: Agent):
         self.agent = agent
 
