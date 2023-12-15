@@ -268,7 +268,7 @@ class Agent:
 
         # get index of action by passing index of state to pi
         current_game_state_index = int(self.states.index(current_game_state_frozenset))
-        action = self.actions[self.pi[current_game_state_index]]
+        action = self.actions[int(self.pi[current_game_state_index])]
         self.actions_log[self.game_counter].append(action)
         return action
     
@@ -315,7 +315,7 @@ class Agent:
 
     #     print("P approximated")
             
-    def update_pi(self, pi: dict):  
+    def update_pi(self, pi):  
         self.pi = pi
 
 # TODO: Implement foggy and non-foggy
