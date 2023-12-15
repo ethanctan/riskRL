@@ -31,6 +31,7 @@ print("All agents initialized. Starting training")
 # Training loops
 ITERS = 10
 for game_number in range(ITERS):
+    print(f"Game {game_number}")
     # Play game
     for turn_number in range(killTurn):
         print(f"Game {game_number}, turn {turn_number}")

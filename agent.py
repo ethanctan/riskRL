@@ -90,7 +90,7 @@ class Agent:
         # each state is a frozenset of tuples where each tuple is (node, owner, troops)
         # each action is a tuple (start_node, end_node)
         print(f"agent {self.agent_id} initializing P")
-        default_prob = 1 / len(self.states)
+        default_prob = 1 # / len(self.states)
         P = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: default_prob)))
 
         return P
@@ -159,15 +159,6 @@ class Agent:
     def update_current_game_state(self, game_state: dict):
         self.game_log[self.game_counter].append(game_state)
     
-    # each game state is the following format: 
-    '''
-    {
-            "nodes": self.nodes,
-            "edges": self.edges,
-            "owners": self.owners
-        }
-    '''
-    # so we need to turn it into a frozenset in order to be understandable by our agent
     def turn_game_state_into_frozenset(self, game_state: dict):
         # want to make a frozenset of tuples (node_index, owner, troops)
         state_frozenset = []
@@ -189,17 +180,16 @@ class Agent:
             next_game_state_frozenset = self.turn_game_state_into_frozenset(next_game_state)
             self.P[game_state_frozenset][action][next_game_state_frozenset] += 1      
 
-        # normalize P 
-        for state in self.states:
-            for action in self.actions:
-                total = sum(self.P[state][action].values())
-                if total:
-                    for next_state in self.states:
-                        self.P[state][action][next_state] /= total
+        # # normalize P 
+        # for state in self.states:
+        #     for action in self.actions:
+        #         total = sum(self.P[state][action].values())
+        #         if total:
+        #             for next_state in self.states:
+        #                 self.P[state][action][next_state] /= total
 
         print("P approximated")
         
-        # The above is a naive approach: For each state and action, look at which states it transitioned to, then update the probabilities
 
     def update_pi(self, pi: dict):  
         self.pi = pi
@@ -243,8 +233,6 @@ class DynamicProgramming:
                 Ppis = self.agent.P[s][pi[s]]  # defaultdict
                 expected_value = 0
                 for next_state, probability in Ppis.items():
-                    print(f"probability: {probability}")
-                    print(f"V[next_state]: {V[next_state]}")
                     expected_value = (probability * V[next_state])
                     
                 nextV[s] = Rpis + expected_value
