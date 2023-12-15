@@ -100,6 +100,8 @@ class Game:
         # NOTE: The map should be set in advance of running the game.
         # TODO: Ensure agents are aware of where they are in the turn order (i.e. list index).
         self.map = map
+        print(type(initialPosition))
+        print(initialPosition)
         self.players = initialPosition.keys()
         self.reinforceAmount = reinforceAmount
         self.reinforcePlayersOnly = reinforcePlayersOnly
