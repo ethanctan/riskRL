@@ -1,6 +1,7 @@
 from game import Game, Map
 from agent import Agent, DynamicProgramming
 import random
+from copy import deepcopy
 
 # We start by trying to train 2 agents on the default map
 
@@ -25,7 +26,6 @@ killTurn = 100
 map = Map(numNodes, edges, defaultWeight)
 game = Game(map, initialPosition, reinforceAmount, reinforcePlayersOnly)
 agent1 = Agent(game.getState(), 1)
-agent2 = Agent(game.getState(), 2)
 
 agent1.states = agent1.initialize_states()
 agent1.actions = agent1.initialize_actions()
@@ -49,11 +49,11 @@ agent1.R = agent1.initialize_R()
 print("All agents initialized. Starting training")
 
 # Training loops
-ITERS = 10
+ITERS = 20
+agent_rewards = []
 
-for game_number in range(ITERS):
+for game_number in range(10):
     print(f"Game {game_number}")
-    agent_rewards = []
     # Play game
     for turn_number in range(killTurn):
         print(f"Game {game_number}, turn {turn_number}")
@@ -77,10 +77,10 @@ for game_number in range(ITERS):
         agent1.update_current_game_state(game.getState())
         # agent2.update_current_game_state(game.getState())
 
-        # add rewards
-        agent_rewards.append(sum(agent1.rewards))
-        
-        print(game.getState())
+    # add rewards
+    agent_rewards.append(sum(agent1.rewards))
+    
+    print(game.getState())
 
     # approximate P for each agent
     agent1.approximate_P()
@@ -99,7 +99,55 @@ for game_number in range(ITERS):
     agent1.initialize_new_game(game.getState())
     # agent2.initialize_new_game(game.getState())
 
-    print(agent_rewards)
+print(agent_rewards)
+
+agent_rewards = []
+
+agent2 = deepcopy(agent1)
+
+for game_number in range(10):
+    print(f"Game {game_number}")
+    # Play game
+    for turn_number in range(killTurn):
+        print(f"Game {game_number}, turn {turn_number}")
+
+        # Get moves
+        move1 = agent1.make_move()
+        move2 = agent2.make_move()
+
+        moves = [(1, move1[0], move1[1]), (2, move2[0], move2[1])]
+        
+        # Update game
+        if game.turn(moves):
+            break
+
+        # Update agents
+        agent1.update_current_game_state(game.getState())
+        agent2.update_current_game_state(game.getState())
+
+    # add rewards
+    agent_rewards.append(sum(agent1.rewards))
+    
+    print(game.getState())
+
+    # approximate P for each agent
+    agent1.approximate_P()
+    agent2.approximate_P()
+
+    # perform policy iteration
+    agent1_dp = DynamicProgramming(agent1)
+    agent2_dp = DynamicProgramming(agent2)
+    pi1, V1, _ = agent1_dp.policyIteration(agent1.pi)
+    pi2, V2, _ = agent2_dp.policyIteration(agent2.pi)
+    agent1.update_pi(pi1)
+    agent2.update_pi(pi2)
+    
+    # initialize new game and pass to agents
+    game = Game(map, initialPosition, reinforceAmount, reinforcePlayersOnly)
+    agent1.initialize_new_game(game.getState())
+    agent2.initialize_new_game(game.getState())
+
+print(agent_rewards)
 
 # One final game of 20 turns between agent 1 and the player
 map = Map(numNodes, edges, defaultWeight)
