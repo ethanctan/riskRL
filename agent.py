@@ -29,7 +29,6 @@ class Agent:
                     actions.append((i, j))
         return actions
     
-    # Not needed yet
     def get_neighbors(self, node: int):
         neighbors = [node]
         for edge in self.edges:
@@ -87,7 +86,6 @@ class Agent:
 
         return R
 
-                # TODO: Implement rewards that depend on adjacency and how many nodes the enemy owns
 
 
     def initialize_P(self): #P gives transition probabilities from state to state given action
@@ -203,7 +201,6 @@ class Agent:
     def update_pi(self, pi: dict):  
         self.pi = pi
 
-# TODO: Implement foggy and non-foggy
 
 class DynamicProgramming:
     def __init__(self, agent):

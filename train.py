@@ -58,9 +58,6 @@ for game_number in range(ITERS):
     # Play game
     for turn_number in range(killTurn):
         print(f"Game {game_number}, turn {turn_number}")
-        # pass game state to agents
-        agent1.update_current_game_state(game.getState())
-        # agent2.update_current_game_state(game.getState())
 
         # Get moves
         move1 = agent1.make_move()
