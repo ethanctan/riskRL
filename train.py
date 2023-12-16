@@ -51,10 +51,9 @@ print("All agents initialized. Starting training")
 # Training loops
 ITERS = 10
 
-#TODO: 10 random + 10 against itself
-
 for game_number in range(ITERS):
     print(f"Game {game_number}")
+    agent_rewards = []
     # Play game
     for turn_number in range(killTurn):
         print(f"Game {game_number}, turn {turn_number}")
@@ -77,6 +76,9 @@ for game_number in range(ITERS):
         # Update agents
         agent1.update_current_game_state(game.getState())
         # agent2.update_current_game_state(game.getState())
+
+        # add rewards
+        agent_rewards.append(sum(agent1.rewards))
         
         print(game.getState())
 
@@ -96,6 +98,8 @@ for game_number in range(ITERS):
     game = Game(map, initialPosition, reinforceAmount, reinforcePlayersOnly)
     agent1.initialize_new_game(game.getState())
     # agent2.initialize_new_game(game.getState())
+
+    print(agent_rewards)
 
 # One final game of 20 turns between agent 1 and the player
 map = Map(numNodes, edges, defaultWeight)

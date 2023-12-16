@@ -16,6 +16,9 @@ class Agent:
         self.nPlayers = len(game_state["owners"])
         self.edges = game_state["edges"]
 
+        # track rewards over time
+        self.rewards = []
+
 
         # Initialize log for self actions
         self.actions_log = [[]]
@@ -173,6 +176,10 @@ class Agent:
         current_game_state_frozenset = self.turn_game_state_into_frozenset(current_game_state)
         action = self.pi[current_game_state_frozenset]
         self.actions_log[self.game_counter].append(action)
+
+        # track rewards
+        self.rewards.append(self.R[current_game_state_frozenset][action])
+        
         return action
             
     def approximate_P(self):
